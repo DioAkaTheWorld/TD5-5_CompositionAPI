@@ -5,7 +5,7 @@
   <div class="game">
     <h1>Zone de Jeu</h1>
     <p>La partie va commencer ici...</p>
-    <router-link to="/stats">Voir les stats (Abandonner)</router-link>
+    <router-link to="/stats">Voir les stats</router-link>
   </div>
 </template>
 
