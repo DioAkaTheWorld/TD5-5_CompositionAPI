@@ -1,26 +1,31 @@
 <script setup>
 import { inject, ref, onMounted } from 'vue';
 import { useGame } from '../services/game';
+import CodeField from '../components/CodeField.vue';
 
 const pseudo = inject('pseudo');
 
 const { generateCode, validateAttempt, attempts, state } = useGame();
 
-const userInput = ref("");
+const currentProposal = ref(Array(4).fill(null));
 
 onMounted(() => {
   generateCode();
 });
 
 const submitAttempt = () => {
-  const currentProposal = userInput.value.split('').map(Number);
-  if (currentProposal.length !== 4 || currentProposal.some(isNaN)) {
+  if (currentProposal.value.some(val => val === null || val === '')) {
     alert("Veuillez entrer exactement 4 chiffres.");
     return;
   }
-  validateAttempt(currentProposal);
-  userInput.value = "";
+  validateAttempt([...currentProposal.value]);
+  currentProposal.value = Array(4).fill(null);
 };
+
+const restartGame = () => {
+  generateCode();
+  currentProposal.value = Array(4).fill(null);
+}
 </script>
 
 <template>
@@ -33,12 +38,18 @@ const submitAttempt = () => {
     <div v-if="state !== 'en cours'" class="game-over" :class="state">
       <h2 v-if="state === 'gagné'">Bravo {{ pseudo }} !</h2>
       <h2 v-else>Dommage {{ pseudo }}, c'est perdu</h2>
-      <router-link to="/home" class="btn-restart">Rejouer</router-link>
+
+      <button @click="restartGame" class="btn-restart">Rejouer</button>
+      <br><br>
+      <router-link class="btn-stats" to="/stats">Voir les stats</router-link>
     </div>
 
     <div v-else class="input-zone">
-      <input v-model="userInput" type="text" maxlength="4" placeholder=". . . ." @keyup.enter="submitAttempt"/>
-      <button @click="submitAttempt">Valider</button>
+      <CodeField
+          :length="4"
+          v-model="currentProposal"
+          @validate="submitAttempt"
+      />
     </div>
 
     <div class="history">
@@ -47,16 +58,18 @@ const submitAttempt = () => {
         Aucune tentative pour le moment.
       </div>
 
-      <div v-for="(attempt, index) in attempts" :key="index" class="attempt-row">
-        <span class="attempt-number">#{{ index + 1 }}</span>
-        <div class="code-display">
-          <span v-for="digit in attempt.proposal" :key="digit" class="digit">{{ digit }}</span>
+      <TransitionGroup name="list" tag="div" class="history-list">
+        <div v-for="(attempt, index) in attempts" :key="index" class="attempt-row">
+          <span class="attempt-number">#{{ index + 1 }}</span>
+          <div class="code-display">
+            <span v-for="digit in attempt.proposal" :key="digit" class="digit">{{ digit }}</span>
+          </div>
+          <div class="feedback">
+            <span class="well-placed">Bien placés : {{ attempt.wellPlaced }}</span>
+            <span class="mal-placed">Mal placés : {{ attempt.malPlaced }}</span>
+          </div>
         </div>
-        <div class="feedback">
-          <span class="well-placed">Bien placés : {{ attempt.wellPlaced }}</span>
-          <span class="mal-placed">Mal placés : {{ attempt.malPlaced }}</span>
-        </div>
-      </div>
+      </TransitionGroup>
     </div>
   </div>
 </template>
@@ -69,23 +82,21 @@ const submitAttempt = () => {
   text-align: center;
 }
 
+.btn-stats {
+   padding: 10px 20px;
+   background-color: #2c3e50;
+   color: white;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   font-size: 1rem;
+ }
+
 .input-zone {
   margin: 20px 0;
   display: flex;
   justify-content: center;
-  gap: 10px;
 }
-
-input {
-  font-size: 1.5rem;
-  letter-spacing: 5px;
-  padding: 5px;
-  width: 100px;
-  text-align: center;
-}
-
-
-
 
 .attempt-row {
   display: flex;
@@ -95,6 +106,8 @@ input {
   background: white;
   margin-bottom: 5px;
   border-radius: 4px;
+  /* Ombre légère pour mieux voir les cartes */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .code-display {
@@ -122,12 +135,20 @@ input {
   margin: 20px 0;
   border-radius: 8px;
 }
-.game-over.gagné {
-  background-color: #d4edda;
-  color: #155724;
+
+.btn-restart {
+  padding: 8px 16px;
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.game-over.perdu {
-  color: #721c24;
+.history-list {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
 }
+
 </style>
