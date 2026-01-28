@@ -44,6 +44,20 @@ export function useGame() {
         return { wellPlaced, malPlaced };
     };
 
+    const saveScore = (pseudo) => {
+        const currentHistory = JSON.parse(localStorage.getItem('mastermind_scores') || '[]');
+        const newScore = {
+            id: Date.now(),
+            date: new Date().toLocaleDateString(),
+            pseudo: pseudo,
+            code: code.value,
+            result: state.value,
+            lastAttempt: attempts.value[attempts.value.length - 1] || null
+        };
+        currentHistory.unshift(newScore);
+        localStorage.setItem('mastermind_scores', JSON.stringify(currentHistory));
+    };
+
     return {
         code,
         attempts,

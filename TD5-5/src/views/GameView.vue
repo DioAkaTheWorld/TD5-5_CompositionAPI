@@ -19,6 +19,11 @@ const submitAttempt = () => {
     return;
   }
   validateAttempt([...currentProposal.value]);
+
+  if (state.value !== 'en cours') {
+    saveScore(pseudo.value);
+  }
+
   currentProposal.value = Array(4).fill(null);
 };
 
